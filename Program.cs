@@ -1,19 +1,18 @@
 ﻿using System.Reactive.Linq;
 using Jabra.NET.Sdk.Core;
 using Jabra.NET.Sdk.Core.Types;
-using Jabra.NET.Sdk.Properties;
 
 internal class Program
 {
     public static async Task Main()
     {
-        Console.WriteLine("Jabra .NET SDK Device Settings Sample app starting. Press ctrl+c or close the window to end.\n");
+        Console.WriteLine("Jabra .NET SDK Easy Call Control Sample app starting. Press ctrl+c or close the window to end.\n");
 
         //Initialize the core SDK. Recommended to use Init.InitManualSdk(...) (not Init.Init(...)) to allow setup of listeners before the SDK starts discovering devices.
         var config = new Config(
             partnerKey: "get-partner-key-at-developer.jabra.com",
-            appId: "JabraDotNETSettingsSample",
-            appName: "Jabra .NET Settings Sample"
+            appId: "JabraEasyCallControlSample",
+            appName: "Jabra .NET EasyCallControl Sample"
         );
         IManualApi jabraSdk = Init.InitManualSdk(config);
 
@@ -24,12 +23,8 @@ internal class Program
             //Ignore info, warning, and debug log messages.
         });
 
-        //Initialize the SDK's properties module
-        IPropertyModule jabraSdkProps = new PropertyModule(jabraSdk);
-        IPropertyFactory jabraSdkPropsFactory = await jabraSdkProps.CreatePropertyFactory();
-
         //Setup listeners for Jabra devices being attached/detected.
-        SetupDeviceListeners(jabraSdk, jabraSdkPropsFactory);
+        SetupDeviceListeners(jabraSdk);
 
         // Enable the SDK's device discovery AFTER listeners and other necessary infrastructure is setup.
         await jabraSdk.Start();
@@ -39,7 +34,7 @@ internal class Program
         Task.Delay(-1).Wait();
     }
 
-    static void SetupDeviceListeners(IApi jabraSdk, IPropertyFactory jabraSdkPropsFactory)
+    static void SetupDeviceListeners(IApi jabraSdk)
     {
         //Subscribe to Jabra devices being attached/detected by the SDK
         jabraSdk.DeviceAdded.Subscribe((IDevice device) =>
@@ -52,14 +47,15 @@ internal class Program
                 case "Jabra PanaCast 50":
                     Console.WriteLine("\tPress '1': To write settings requiring the device to reboot.\n\tPress any other key to read, write and observe properties not requiring device reboot.\nAwaiting your input...");
                     var userSelection = Console.ReadKey(intercept: true);
-                    if (userSelection.KeyChar == '1')
-                        SampleForJabraPanacast50.ReadWriteWithReboot(device, jabraSdkPropsFactory);
-                    else
-                        SampleForJabraPanacast50.ReadWriteObserve(device, jabraSdkPropsFactory);
+                    //if (userSelection.KeyChar == '1')
+                    //    SampleForJabraPanacast50.ReadWriteWithReboot(device, jabraSdkPropsFactory);
+                    //else
+                    //    SampleForJabraPanacast50.ReadWriteObserve(device, jabraSdkPropsFactory);
                     break;
 
                 case "Jabra Engage 50 II":
-                    SampleForJabraEngage50II.ReadWriteObserve(device, jabraSdkPropsFactory);
+                    Console.WriteLine("Found Engage 50 II");
+                    //SampleForJabraEngage50II.ReadWriteObserve(device, jabraSdkPropsFactory);
                     break;
             }
         });
