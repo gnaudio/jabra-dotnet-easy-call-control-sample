@@ -8,6 +8,7 @@ internal class Program
 {
     private static IManualApi jabraSdk;
     private static EasyCallControlFactory easyCallControlFactory;
+    // Using MultiCallControl to handle multiple calls. Even if you only need to handle single call use cases, you should use MultiCallControl.
     private static IMultiCallControl multiCallControl;
 
     public static async Task Main()
@@ -53,13 +54,7 @@ internal class Program
             {
                 Console.WriteLine("Setting up Easy Call Control for device: " + device.Name);
                 multiCallControl = await easyCallControlFactory.CreateMultiCallControl(device);
-                await multiCallControl.StartCall();
-                System.Threading.Thread.Sleep(5000);
-                await multiCallControl.Hold();
-                System.Threading.Thread.Sleep(5000);
-                await multiCallControl.Resume();
-                System.Threading.Thread.Sleep(5000);
-                await multiCallControl.EndCall();
+                CommandLineInterface();
             }
             else
             {
@@ -70,7 +65,22 @@ internal class Program
         //Subscribe to Jabra devices being detached/rebooted
         jabraSdk.DeviceRemoved.Subscribe((IDevice device) =>
         {
-            Console.WriteLine($"< Device detached/reboots: {device.Name} (Product ID: {device.ProductId}, Serial #: {device.SerialNumber})");
+            Console.WriteLine($"< Device detached: {device.Name} (Product ID: {device.ProductId}, Serial #: {device.SerialNumber})");
         });
+    }
+    static void CommandLineInterface()
+    {
+        Console.WriteLine("Enter a command:");
+        var userSelection = Console.ReadKey(intercept: true);
+        switch (userSelection.KeyChar)
+        {
+            case '1':
+                Console.WriteLine("keypressed 1");
+                break;
+            default:
+                Console.WriteLine("Invalid command.");
+                break;
+        }
+
     }
 }
