@@ -1,9 +1,15 @@
 ﻿using System.Reactive.Linq;
 using Jabra.NET.Sdk.Core;
 using Jabra.NET.Sdk.Core.Types;
+using Jabra.NET.Sdk.Modules.EasyCallControl;
+using Jabra.NET.Sdk.Modules.EasyCallControl.Types;
 
 internal class Program
 {
+    private static IManualApi jabraSdk;
+    private static EasyCallControlFactory easyCallControlFactory;
+    private static IMultiCallControl multiCallControl;
+
     public static async Task Main()
     {
         Console.WriteLine("Jabra .NET SDK Easy Call Control Sample app starting. Press ctrl+c or close the window to end.\n");
@@ -14,7 +20,8 @@ internal class Program
             appId: "JabraEasyCallControlSample",
             appName: "Jabra .NET EasyCallControl Sample"
         );
-        IManualApi jabraSdk = Init.InitManualSdk(config);
+        jabraSdk = Init.InitManualSdk(config);
+        easyCallControlFactory = new EasyCallControlFactory(jabraSdk);
 
         //Subscribe to SDK log events.
         jabraSdk.LogEvents.Subscribe((log) =>
@@ -24,7 +31,7 @@ internal class Program
         });
 
         //Setup listeners for Jabra devices being attached/detected.
-        SetupDeviceListeners(jabraSdk);
+        SetupDeviceListeners();
 
         // Enable the SDK's device discovery AFTER listeners and other necessary infrastructure is setup.
         await jabraSdk.Start();
@@ -34,29 +41,29 @@ internal class Program
         Task.Delay(-1).Wait();
     }
 
-    static void SetupDeviceListeners(IApi jabraSdk)
+    static void SetupDeviceListeners()
     {
         //Subscribe to Jabra devices being attached/detected by the SDK
-        jabraSdk.DeviceAdded.Subscribe((IDevice device) =>
+        jabraSdk.DeviceAdded.Subscribe(async (IDevice device) =>
         {
             Console.WriteLine($"> Device attached/detected: {device.Name} (Product ID: {device.ProductId}, Serial #: {device.SerialNumber})");
 
-            //Determine which sample to run based on the device detected.
-            switch (device.Name)
+            // If the device supports Easy Call Control, enable it.
+            if (easyCallControlFactory.SupportsEasyCallControl(device)) 
             {
-                case "Jabra PanaCast 50":
-                    Console.WriteLine("\tPress '1': To write settings requiring the device to reboot.\n\tPress any other key to read, write and observe properties not requiring device reboot.\nAwaiting your input...");
-                    var userSelection = Console.ReadKey(intercept: true);
-                    //if (userSelection.KeyChar == '1')
-                    //    SampleForJabraPanacast50.ReadWriteWithReboot(device, jabraSdkPropsFactory);
-                    //else
-                    //    SampleForJabraPanacast50.ReadWriteObserve(device, jabraSdkPropsFactory);
-                    break;
-
-                case "Jabra Engage 50 II":
-                    Console.WriteLine("Found Engage 50 II");
-                    //SampleForJabraEngage50II.ReadWriteObserve(device, jabraSdkPropsFactory);
-                    break;
+                Console.WriteLine("Setting up Easy Call Control for device: " + device.Name);
+                multiCallControl = await easyCallControlFactory.CreateMultiCallControl(device);
+                await multiCallControl.StartCall();
+                System.Threading.Thread.Sleep(5000);
+                await multiCallControl.Hold();
+                System.Threading.Thread.Sleep(5000);
+                await multiCallControl.Resume();
+                System.Threading.Thread.Sleep(5000);
+                await multiCallControl.EndCall();
+            }
+            else
+            {
+                Console.WriteLine("Easy Call Control is not supported for device: " + device.Name);
             }
         });
 
