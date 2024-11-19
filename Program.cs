@@ -83,28 +83,14 @@ internal class Program
                 SetupEcc(device, null);
 
                 // Listen for disconnect event for headset. Disconnect can happen when the device has multiple connections
-                // such as a BT headset connected via the dongle and a USB cable at the same time. In these cases we need to handle the 
-                // switching between the connections in case for example the USB connection is disconnected.
+                // such as a BT headset connected via the dongle and a USB cable at the same time. Depending on which active audio device
+                // you have setup in your softphone, you might want to setup a new Easy Call Control instance when the other connection is removed.
                 device.ConnectionRemoved.Subscribe(async (connection) => 
                 {
                     if (!easyCallControl.Connection.IsConnected)
                     {
-                        // Active connection for Easy Call Control was removed. Teardown Easy Call Control and set up again with initial state.
-                        easyCallControl.Teardown();
-                        if (easyCallControlFactory.SupportsEasyCallControl(device))
-                        {
-                            OutPutToConsole($"One of the ways the headset was connected was removed. \n" +
-                                $"Other connection still active - setting up ECC again with previous state for: {device.Name}");
-                            bool initialMuteState = (currentEccState.IsMuted == MuteState.Muted);
-                            bool initialHoldState = (currentEccState.IsOnHold == HoldState.OnHold);
-                            MultiInitialState initialState = new MultiInitialState
-                            (
-                                ongoingCalls: currentEccState.OngoingCalls,
-                                isMuted: initialMuteState,
-                                isOnHold: initialHoldState
-                            );
-                            SetupEcc(device, initialState);
-                        }
+                        OutPutToConsole("Active connection for ECC was removed");
+                        // Consider creating a new ECC with initial state if needed.
                     }
                     else
                     {
@@ -126,14 +112,12 @@ internal class Program
             if (currentEccDevice == device)
             {
                 OutPutToConsole("Removed current ECC headset: " + device.Name);
-                // Here we should look through available devices and see if we can find another device to connect to.
-                // TO DO - Implement logic to connect to another device if available.
-
+                // Here you might want to look at setting up ECC for another connected Jabra device if needed.
             }
         });
     }
 
-        async static void SetupEcc(IDevice device, MultiInitialState? initialState)
+    async static void SetupEcc(IDevice device, MultiInitialState? initialState)
     {
         // Create Easy Call Control instance for the device
         if (initialState == null)
@@ -151,53 +135,70 @@ internal class Program
         // OngoingCalls is the number of ongoing calls on the device. This includes active and held calls. 
         easyCallControl.OngoingCalls.Subscribe((ongoingCalls) =>
         {
-            OutPutToConsole($"Ongoing calls: {ongoingCalls} - new ECC state is:\n" +
-                "-----\n" +
-                $"Ongoing calls: {ongoingCalls} (was: {currentEccState.OngoingCalls})\n" +
-                $"IsMuted: {currentEccState.IsMuted}\n" +
-                $"IsOnHold: {currentEccState.IsOnHold}\n" +
-                $"IsRinging: {currentEccState.IsRinging}\n" +
-                "-----");
-            currentEccState.OngoingCalls = (uint)ongoingCalls;
-
+            // Only output state if different from previous state.
+            if (ongoingCalls != currentEccState.OngoingCalls)
+            {
+                OutPutToConsole($"Ongoing calls: {ongoingCalls} - new ECC state is:\n" +
+                    "-----\n" +
+                    $"Ongoing calls: {ongoingCalls} (was: {currentEccState.OngoingCalls})\n" +
+                    $"IsMuted: {currentEccState.IsMuted}\n" +
+                    $"IsOnHold: {currentEccState.IsOnHold}\n" +
+                    $"IsRinging: {currentEccState.IsRinging}\n" +
+                    "-----");
+                currentEccState.OngoingCalls = (uint)ongoingCalls;
+            }
         });
+
         // MuteState is the microphone mute state of the device. 
         easyCallControl.MuteState.Subscribe((isMuted) =>
         {
-            OutPutToConsole($"Mute state: {isMuted} - new ECC state is:\n" +
+            // Only output state if different from previous state.
+            if (isMuted!= currentEccState.IsMuted)
+            {
+                OutPutToConsole($"Mute state: {isMuted} - new ECC state is:\n" +
                 "-----\n" +
                 $"Ongoing calls: {currentEccState.OngoingCalls}\n" +
                 $"IsMuted: {isMuted} (was: {currentEccState.IsMuted})\n" +
                 $"IsOnHold: {currentEccState.IsOnHold}\n" +
                 $"IsRinging: {currentEccState.IsRinging}\n" +
                 "-----");
-            currentEccState.IsMuted = isMuted;
+                currentEccState.IsMuted = isMuted;
+            }  
         });
+
         // HoldState indicates if call is on hold or not. 
         easyCallControl.HoldState.Subscribe((isOnHold) =>
         {
-            OutPutToConsole($"Hold state: {isOnHold} - new ECC state is:\n" +
+            // Only output state if different from previous state.
+            if (isOnHold != currentEccState.IsOnHold)
+            {
+                OutPutToConsole($"Hold state: {isOnHold} - new ECC state is:\n" +
                 "-----\n" +
                 $"Ongoing calls: {currentEccState.OngoingCalls}\n" +
                 $"IsMuted: {currentEccState.IsMuted}\n" +
                 $"IsOnHold: {isOnHold} (was: {currentEccState.IsOnHold})\n" +
                 $"IsRinging: {currentEccState.IsRinging}\n" +
                 "-----");
-            currentEccState.IsOnHold = isOnHold;
+                currentEccState.IsOnHold = isOnHold;
+            }
         });
+
         // RingState indicates if the device is ringing or not (incoming call).
         easyCallControl.RingState.Subscribe((isRinging) =>
         {
-            OutPutToConsole($"Ring state: {isRinging} - new ECC state is:\n" +
+            // Only output state if different from previous state.
+            if (isRinging != currentEccState.IsRinging)
+            {
+                OutPutToConsole($"Ring state: {isRinging} - new ECC state is:\n" +
                 "-----\n" +
                 $"Ongoing calls: {currentEccState.OngoingCalls}\n" +
                 $"IsMuted: {currentEccState.IsMuted}\n" +
                 $"IsOnHold: {currentEccState.IsOnHold}\n" +
                 $"IsRinging: {isRinging} (was: {currentEccState.IsRinging})\n" +
                 "-----");
-            currentEccState.IsRinging = isRinging;
+                currentEccState.IsRinging = isRinging;
+            }
         });
-
     }
 
     static void PrintMenu()
@@ -213,7 +214,6 @@ internal class Program
         Console.WriteLine("6: Resume call");
         Console.WriteLine("7: Mute call");
         Console.WriteLine("8: Unmute call");
-        Console.WriteLine("9: TEMP breakpoint");
         Console.WriteLine("----------");
     }
     static void HandleKeyPress(char keyChar)
@@ -259,11 +259,6 @@ internal class Program
                 // Unmute call
                 easyCallControl.Unmute();
                 OutPutToConsole("Unmute()");
-                break;
-            case '9':
-                // Teardown
-                
-                OutPutToConsole("TEMP breakpoint");
                 break;
             default:
                 // Ignore other keys
