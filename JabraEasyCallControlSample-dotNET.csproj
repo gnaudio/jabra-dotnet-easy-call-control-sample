@@ -6,11 +6,11 @@
     <RootNamespace>JabraEasyCallControlSample_dotNET</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Jabra.NET.Sdk" Version="4.7.1" />
-    <PackageReference Include="System.Text.Json" Version="6.0.11" />
   </ItemGroup>
 
 </Project>
