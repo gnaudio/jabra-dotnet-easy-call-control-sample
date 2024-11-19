@@ -34,7 +34,7 @@ internal class Program
         // Start the key press listener in a separate task
         var keyPressTask = Task.Run(() => ListenForKeyPress(), CancellationToken.None);
 
-        // Initialize the core SDK. Recommended to use Init.InitManualSdk(...) (not Init.Init(...)) to allow setup of listeners before the SDK starts discovering devices.
+        // Initialize the core SDK. Recommended to use Init.InitManualSdk(...) (not Init.InitSdk(...)) to allow setup of listeners before the SDK starts discovering devices.
         var config = new Config(
             partnerKey: "get-partner-key-at-developer.jabra.com",
             appId: "JabraEasyCallControlSample",
