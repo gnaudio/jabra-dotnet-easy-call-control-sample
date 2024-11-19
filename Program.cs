@@ -87,7 +87,7 @@ internal class Program
                 // Listen for disconnect event for headset. Disconnect can happen when the device has multiple connections
                 // such as a BT headset connected via the dongle and a USB cable at the same time. Depending on which active audio device
                 // you have setup in your softphone, you might want to setup a new Easy Call Control instance when the other connection is removed.
-                device.ConnectionRemoved.Subscribe(async (connection) => 
+                device.ConnectionRemoved.Subscribe(async (IConnection connection) => 
                 {
                     if (!easyCallControl.Connection.IsConnected)
                     {
