@@ -22,6 +22,7 @@ internal class Program
 
     private static IManualApi jabraSdk;
     private static EasyCallControlFactory easyCallControlFactory;
+    
     // Using MultiCallControl to handle multiple calls. Even if you only need to handle single call use cases, you should use MultiCallControl.
     private static IMultiCallControl easyCallControl;
 
