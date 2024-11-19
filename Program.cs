@@ -23,18 +23,18 @@ internal class Program
     private static IManualApi jabraSdk;
     private static EasyCallControlFactory easyCallControlFactory;
     
-    // Using MultiCallControl to handle multiple calls. Even if you only need to handle single call use cases, you should use MultiCallControl.
+    // Using MultiCallControl to handle multiple calls (i.e. support putting calls on hold). Even if you only need to handle single call use cases, you should use MultiCallControl.
     private static IMultiCallControl easyCallControl;
 
     public static async Task Main()
     {
-        // Writing available commands to console 
+        // Writing available demo commands to console 
         PrintMenu();
 
         // Start the key press listener in a separate task
         var keyPressTask = Task.Run(() => ListenForKeyPress(), CancellationToken.None);
 
-        // Initialize the core SDK. Recommended to use Init.InitManualSdk(...) (not Init.InitSdk(...)) to allow setup of listeners before the SDK starts discovering devices.
+        // Initialize the core SDK. Recommended to use Init.InitManualSdk(...) (not Init.InitSdk(...)) to allow setup of listeners before the SDK starts discovering devices. But don't forget the jabraSdk.Start(); call later.
         var config = new Config(
             partnerKey: "get-partner-key-at-developer.jabra.com",
             appId: "JabraEasyCallControlSample",
@@ -57,8 +57,9 @@ internal class Program
         await jabraSdk.Start();
         OutPutToConsole("Now listening for Jabra devices...\n");
 
+
         // Keep the sample app running until actively closed.
-        Task.Delay(-1).Wait();
+        await Task.Delay(Timeout.Infinite);
     }
 
     static void SetupDeviceListeners()
@@ -106,7 +107,7 @@ internal class Program
             }
         });
 
-        //Subscribe to Jabra devices being detached/rebooted
+        //Subscribe to Jabra devices being unplugged
         jabraSdk.DeviceRemoved.Subscribe((IDevice device) =>
         {
             OutPutToConsole($"< Device detached: {device.Name} (Product ID: {device.ProductId}, Serial #: {device.SerialNumber})");
@@ -131,7 +132,7 @@ internal class Program
         }
 
         // Subscribe to Easy Call Control events. By listening to these events your application
-        // can keep track of the call state of the device and update its UI accordingly.
+        // can keep track of the call state of the device and update your application's UI accordingly.
 
         // OngoingCalls is the number of ongoing calls on the device. This includes active and held calls. 
         easyCallControl.OngoingCalls.Subscribe((ongoingCalls) =>
@@ -202,11 +203,14 @@ internal class Program
         });
     }
 
+    /************************************
+    ** Methods for setting up demo app **
+    ************************************/
     static void PrintMenu()
     {
         Console.WriteLine("Jabra .NET SDK Easy Call Control Sample app starting. Press ctrl+c or close the window to end.");
         Console.WriteLine("----------");
-        Console.WriteLine("Available commands:");
+        Console.WriteLine("Available commands when a Jabra device is detected:");
         Console.WriteLine("1: New incoming call");
         Console.WriteLine("2: New outgoing call");
         Console.WriteLine("3: Answer call");

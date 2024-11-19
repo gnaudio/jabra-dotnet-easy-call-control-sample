@@ -1,8 +1,8 @@
 # Jabra SDK4 .NET - Easy Call Control Sample
 
-This is a .NET sample app demonstrating how to implement Easy Call Control for Jabra headset devices using the Jabra SDK4 .NET
+This is a .NET sample app demonstrating how to implement Easy Call Control for Jabra headset devices using the [Jabra SDK4 .NET](http://developer.jabra.com/sdks-and-tools/dotnet)
 
-> 💡 For an introduction and overview of Jabra device integration posibilities, please visit [developer.jabra.com](https://developer.jabra.com).
+> 💡 For an introduction and overview of Jabra device integration possibilities, please visit [developer.jabra.com](https://developer.jabra.com).
 
 ## How to run
 
@@ -15,4 +15,4 @@ This is a .NET sample app demonstrating how to implement Easy Call Control for J
 
 ## Help and issues
 
-If you have questions or find a bug, please reach out via the support form at [developer.jabra.com](https://developer.jabra.com)
+If you have questions or find a bug, please reach out via the support form at [developer.jabra.com](https://developer.jabra.com/support)
