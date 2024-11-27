@@ -100,6 +100,16 @@ internal class Program
                             $"ECC was set up for another connection so is still active for: {device.Name}");
                     }
                 });
+
+                // Subscribe to connection list
+                device.ConnectionList.Subscribe((List<IConnection> connections) =>
+                {
+                    OutPutToConsole($"Connections for device: {device.Name}");
+                    foreach (var connection in connections)
+                    {
+                        OutPutToConsole($"Connection: {connection.Type} - {connection.IsConnected}");
+                    }
+                });
             }
             else
             {
@@ -201,6 +211,13 @@ internal class Program
                 currentEccState.IsRinging = isRinging;
             }
         });
+
+        // SwapRequest is called when the user wants to swap between two calls. 
+        easyCallControl.SwapRequest.Subscribe((_) =>
+        {
+            OutPutToConsole("Swap Requested.");
+            // (...) Implement your application's logic for swapping between two calls.
+        });
     }
 
     /************************************
@@ -214,55 +231,71 @@ internal class Program
         Console.WriteLine("1: New incoming call");
         Console.WriteLine("2: New outgoing call");
         Console.WriteLine("3: Answer call");
-        Console.WriteLine("4: End call");
-        Console.WriteLine("5: Hold call");
-        Console.WriteLine("6: Resume call");
-        Console.WriteLine("7: Mute call");
-        Console.WriteLine("8: Unmute call");
+        Console.WriteLine("4: Reject call");
+        Console.WriteLine("5: End call");
+        Console.WriteLine("6: Hold call");
+        Console.WriteLine("7: Resume call");
+        Console.WriteLine("8: Mute call");
+        Console.WriteLine("9: Unmute call");
         Console.WriteLine("----------");
     }
-    static void HandleKeyPress(char keyChar)
+    async static void HandleKeyPress(char keyChar)
     {
         switch (keyChar)
         {
             case '1':
-                // New incoming call
-                easyCallControl.SignalIncomingCall();
+                // New incoming call - note there is an optional parameter for timeout in milliseconds. 
+                // After timeout the SDK considers the call Rejected. 
                 OutPutToConsole("SignalIncomingCall()");
+                bool callAcceptedResult = await easyCallControl.SignalIncomingCall();
+                if (callAcceptedResult)
+                {
+                    OutPutToConsole("SignalIncomingCall() - Call accepted");
+                }
+                else
+                {
+                    OutPutToConsole("SignalIncomingCall() - Call rejected");
+                }
                 break;
             case '2':
                 // New outgoing call
-                easyCallControl.StartCall();
+                await easyCallControl.StartCall();
                 OutPutToConsole("StartCall()");
                 break;
             case '3':
-                // Answer call
-                easyCallControl.AcceptIncomingCall();
+                // Answer call. Note there is an optional parameter in case of multiple calls to specify whether to 
+                // accept and hang up current call, or accept and put current call on hold.
+                await easyCallControl.AcceptIncomingCall();
                 OutPutToConsole("AcceptIncomingCall()");
                 break;
             case '4':
-                // End call
-                easyCallControl.EndCall();
-                OutPutToConsole("EndCall()");
+                // Reject incoming call. 
+                await easyCallControl.RejectIncomingCall();
+                OutPutToConsole("RejectIncomingCall()");
                 break;
             case '5':
-                // Hold call
-                easyCallControl.Hold();
-                OutPutToConsole("Hold()");
+                // End call
+                await easyCallControl.EndCall();
+                OutPutToConsole("EndCall()");
                 break;
             case '6':
-                // Resume call
-                easyCallControl.Resume();
-                OutPutToConsole("Resume()");
+                // Hold call
+                await easyCallControl.Hold();
+                OutPutToConsole("Hold()");
                 break;
             case '7':
-                // Mute call
-                easyCallControl.Mute();
-                OutPutToConsole("Mute()");
+                // Resume call
+                await easyCallControl.Resume();
+                OutPutToConsole("Resume()");
                 break;
             case '8':
+                // Mute call
+                await easyCallControl.Mute();
+                OutPutToConsole("Mute()");
+                break;
+            case '9':
                 // Unmute call
-                easyCallControl.Unmute();
+                await easyCallControl.Unmute();
                 OutPutToConsole("Unmute()");
                 break;
             default:
